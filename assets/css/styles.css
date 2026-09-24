@@ -1,0 +1,1043 @@
+/* ==========================================================================
+   蔡美雯 & 杨伟彬 · 婚礼请帖
+   配色取自婚纱照两组：白棚红线组 / 中式囍字组
+
+   设计规则（改样式前请先读这三条，全页都照这个来）：
+   1. 颜色一律走语意 token（--paper / --ink / --accent …），
+      深色模式只换 token 的值，不另外写一套规则。
+   2. 圆角只有两种：可点的东西（按钮、选项、圆钮）是全圆；
+      版面上的块（照片、分隔、卡片）一律直角。不要出现第三种。
+   3. 强调色只有一个：--accent（红）。金色只做细节点缀，不当第二强调色。
+   ========================================================================== */
+
+/* --- 1. Tokens ---------------------------------------------------------- */
+:root {
+  /* 品牌色（不随深浅模式变） */
+  --red:        #C21F26;
+  --gold:       #B08D57;   /* 线条、装饰 */
+  --gold-text:  #8A6A34;   /* 浅底上的金色文字，要暗一阶才够 4.5:1 */
+  --gold-pale:  #E0CDA9;
+
+  /* 语意色 · 浅色（预设） */
+  --paper:      #FBF7F1;   /* 页面底 */
+  --paper-2:    #F4ECE1;   /* 次一层底：RSVP 那段 */
+  --paper-3:    #EFE5D6;   /* 再深一点：第三章顶端 */
+  --ink:        #1B1917;   /* 正文主色 */
+  --ink-soft:   #4A443F;   /* 段落 */
+  --ink-mute:   #8A817A;   /* 说明、注解 */
+  --line:       rgba(27, 25, 23, 0.14);
+  --accent:     var(--red);   /* 线条、强调字 */
+  --accent-fill: var(--red);  /* 填色按钮的底：上面要压浅色字，够暗才读得到 */
+  --accent-ink: #5A0A0E;   /* 红底区块的底色 */
+  --on-accent:  #FBF7F1;   /* 红底上的文字 */
+  --grain:      0.032;     /* 纸纹强度 */
+  --veil:       rgba(250, 246, 240, 0.66);  /* 底图上盖的一层纸：够薄看得到照片，够厚字站得住 */
+
+  --font-serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-sans:  "Noto Sans SC", -apple-system, "PingFang SC", sans-serif;
+  --font-latin: "Cormorant Garamond", "Noto Serif SC", serif;
+
+  --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft:  cubic-bezier(0.4, 0, 0.2, 1);
+
+  --gutter:     clamp(1.25rem, 5vw, 4rem);
+  --measure:    34rem;
+  --section-y:  clamp(5rem, 13vw, 10rem);
+
+  /* 圆角系统（见档头第 2 条） */
+  --r-pill:     999px;
+  --r-flat:     0;
+
+  /* 整份请帖锁在这一套浅色上：底图用的是白棚那组照片，
+     深色模式会把照片压成一片灰，看不出是照片，所以不做深色版。 */
+  color-scheme: light;
+}
+
+/* --- 2. Reset / base ---------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+/* ScrollSmoother 自己接管卷动，原生 smooth 会跟它打架 */
+html.gsap { scroll-behavior: auto; }
+#smooth-wrapper, #smooth-content { width: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: clamp(0.975rem, 0.9rem + 0.35vw, 1.0625rem);
+  font-weight: 300;
+  line-height: 1.95;
+  letter-spacing: 0.03em;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; height: auto; }
+button { font: inherit; color: inherit; cursor: pointer; }
+h1, h2, h3 { font-family: var(--font-serif); font-weight: 500; line-height: 1.35; margin: 0; }
+p { margin: 0 0 1.15em; }
+p:last-child { margin-bottom: 0; }
+
+::selection { background: var(--accent); color: var(--on-accent); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.wrap { width: min(100% - var(--gutter) * 2, 70rem); margin-inline: auto; }
+.narrow { max-width: var(--measure); }
+.center { text-align: center; margin-inline: auto; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* 纸纹：固定在最上层、不吃点击。只这一层有 filter，
+   不要放进会卷动的容器里，那样手机会一路重绘。 */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 90;
+  pointer-events: none;
+  opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+/* --- 3. 进场前的起始状态 ------------------------------------------------
+   只在 GSAP 真的载入成功（<html class="gsap">）时才藏东西，
+   动画由 main.js 负责把它们放出来。CDN 挂了就没有 .gsap，
+   下面这些规则整组不生效，页面就是一份静态但完整的请帖。       */
+.gsap .reveal      { opacity: 0; transform: translateY(2.25rem); }
+.gsap .reveal-img  { clip-path: inset(0% 0% 100% 0%); }
+.gsap .hero__inner { opacity: 0; }
+.gsap .xi-mark     { opacity: 0; }
+
+/* --- 4. 红线：贯穿全页的结构主线 ---------------------------------------- */
+.thread {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* 只占左边一条窄带，永远不会压到内文 */
+  width: clamp(18px, 4vw, 76px);
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  overflow: visible;
+}
+.thread path {
+  fill: none;
+  /* 必须用 url()：CSS 的 stroke 会盖过 SVG 上的 stroke 属性 */
+  stroke: url(#threadGrad);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+/* RSVP 上方的绳结 */
+.knot { display: block; margin: 0 auto 2rem; color: var(--accent); }
+.knot path { stroke: currentColor; }
+
+/* --- 4b. 区块底图 -------------------------------------------------------
+   纯文字那几段太空，垫一张白棚照当底。只轻轻模糊（16px）——
+   要看得出是我们的照片，不是一片糊。上面盖一层 --veil 把亮度拉平，
+   字压上去才稳；两端各淡出一小段，接住前后区块。          */
+.sec-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sec-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 32%;
+  /* 稍微放大，盖住模糊后边缘那圈透明 */
+  transform: scale(1.06);
+  filter: blur(12px);
+}
+/* 表单那段：栏位跟提示字都小，底图再压淡一点 */
+.sec-bg--low { --veil: rgba(250, 246, 240, 0.78); }
+.sec-bg--low img { object-position: 30% 45%; }
+.sec-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    /* 中间再提亮一点：字都落在这一带，照片留在四周 */
+    radial-gradient(115% 62% at 50% 50%,
+      rgba(250, 246, 240, 0.55) 0%, rgba(250, 246, 240, 0) 72%),
+    linear-gradient(to bottom,
+      var(--paper) 0%, transparent 14%,
+      transparent 86%, var(--paper) 100%),
+    var(--veil);
+}
+/* 内容要压在底图上面 */
+.has-bg > .wrap { position: relative; z-index: 1; }
+
+/* --- 5. 章节通用 -------------------------------------------------------- */
+.section { position: relative; padding-block: var(--section-y); }
+
+/* 章节标题：中文大标 + 底下一行英文。全页统一这一种，
+   不再另外加英文小标，免得每段开头长得一模一样。 */
+.sec-title {
+  text-wrap: balance;
+  font-size: clamp(1.7rem, 1.15rem + 2.6vw, 2.7rem);
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  margin-bottom: 0.75rem;
+}
+/* 用 :last-child 提一级 —— 基础样式里 p:last-child 的 margin-bottom:0
+   会把这行英文和下面的东西黏在一起，而它常常正好是容器的最后一个孩子 */
+.sec-en,
+.sec-en:last-child {
+  font-family: var(--font-latin);
+  font-style: italic;
+  font-size: clamp(0.95rem, 0.88rem + 0.35vw, 1.15rem);
+  letter-spacing: 0.14em;
+  color: var(--gold-text);
+  margin-bottom: 2.25rem;
+}
+/* 只有英文、没有中文大标那几段（Save The Date、Gallery） */
+.sec-en--lead,
+.sec-en--lead:last-child {
+  font-size: clamp(1.25rem, 1rem + 1.2vw, 1.9rem);
+  letter-spacing: 0.08em;
+  margin-bottom: clamp(2rem, 5vw, 3rem);
+}
+
+.prose {
+  font-size: clamp(1rem, 0.94rem + 0.32vw, 1.125rem);
+  line-height: 2.2;
+  color: var(--ink-soft);
+}
+
+.rule {
+  width: 1px;
+  height: clamp(3rem, 8vw, 5.5rem);
+  background: linear-gradient(var(--gold), transparent);
+  margin: 0 auto 2.5rem;
+}
+
+/* --- 6. Hero ------------------------------------------------------------ */
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  place-items: end center;
+  overflow: hidden;
+  isolation: isolate;
+}
+.hero__media { position: absolute; inset: 0; z-index: -2; }
+.hero__media img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: 50% 42%;
+  will-change: transform;
+}
+/* 没有 GSAP 时的静态推近，有 GSAP 就交给 timeline */
+html:not(.gsap) .hero__media img { transform: none; }
+
+.hero::after {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  /* 这张 Hero 是大红加金绣，很亮很花，压得不够暗字会读不出来 */
+  background:
+    radial-gradient(96% 66% at 50% 72%, rgba(24, 4, 6, 0.9) 0%, rgba(24, 4, 6, 0.52) 48%, rgba(24, 4, 6, 0) 78%),
+    linear-gradient(
+      to bottom,
+      rgba(40, 8, 10, 0.46) 0%,
+      rgba(40, 8, 10, 0.24) 26%,
+      rgba(35, 6, 8, 0.58) 62%,
+      rgba(24, 4, 6, 0.92) 90%,
+      /* 最下缘压到全不透明，正好等于下一段渐层的起点，接缝才看不出来 */
+      rgba(26, 4, 6, 1) 100%
+    );
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #FBF7F1;
+  padding: 0 var(--gutter) clamp(4.5rem, 11vh, 7rem);
+  width: 100%;
+}
+.hero__latin {
+  font-family: var(--font-latin);
+  font-size: clamp(0.7rem, 0.62rem + 0.4vw, 0.875rem);
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  text-transform: uppercase;
+  opacity: 0.92;
+  margin-bottom: 1.6rem;
+  text-shadow: 0 1px 3px rgba(20, 3, 5, 0.9), 0 1px 20px rgba(20, 3, 5, 0.8);
+}
+.hero__names {
+  font-family: var(--font-serif);
+  font-size: clamp(2.2rem, 1.1rem + 5.4vw, 4.6rem);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  line-height: 1.28;
+  margin: 0 0 1.4rem;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.35);
+}
+.hero__amp {
+  display: block;
+  font-family: var(--font-latin);
+  font-size: 0.4em;
+  color: var(--gold-pale);
+  letter-spacing: 0.08em;
+  text-indent: 0.08em;
+  margin: 0.3em 0 0.22em;
+  font-style: italic;
+  /* 斜体的 g 有下伸部，行高压太紧会被切掉 */
+  line-height: 1.15;
+  padding-bottom: 0.1em;
+}
+.hero__date {
+  font-family: var(--font-latin);
+  font-size: clamp(1.15rem, 0.95rem + 1.1vw, 1.7rem);
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  margin-bottom: 0.9rem;
+  color: var(--gold-pale);
+  text-shadow: 0 1px 14px rgba(20, 3, 5, 0.7);
+}
+.hero__meta {
+  font-size: clamp(0.85rem, 0.8rem + 0.3vw, 0.9375rem);
+  letter-spacing: 0.24em;
+  text-indent: 0.24em;
+  opacity: 0.94;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 1px 14px rgba(20, 3, 5, 0.6);
+}
+.hero__venue {
+  font-size: clamp(0.8rem, 0.76rem + 0.24vw, 0.875rem);
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  opacity: 0.74;
+  text-shadow: 0 1px 14px rgba(20, 3, 5, 0.6);
+}
+
+/* 倒数：细线分格，不做成小挂件 */
+.countdown__lead {
+  margin: clamp(1.75rem, 5vh, 2.75rem) 0 0.9rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em;
+  opacity: 0.7;
+  text-shadow: 0 1px 14px rgba(20, 3, 5, 0.6);
+}
+.hero__cta { margin: clamp(1.75rem, 4.5vh, 2.5rem) 0 0; }
+.countdown {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  margin: 0 auto;
+  width: fit-content;
+  border-top: 1px solid rgba(251, 247, 241, 0.24);
+  border-bottom: 1px solid rgba(251, 247, 241, 0.24);
+  padding-block: 1.1rem;
+}
+.countdown__cell {
+  text-align: center;
+  min-width: clamp(3.75rem, 15vw, 5.5rem);
+  padding-inline: clamp(0.35rem, 2vw, 0.9rem);
+}
+.countdown__cell + .countdown__cell {
+  border-left: 1px solid rgba(251, 247, 241, 0.18);
+}
+.countdown__num {
+  font-family: var(--font-latin);
+  font-size: clamp(1.7rem, 1.1rem + 2.4vw, 2.5rem);
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  display: block;
+}
+.countdown__lbl {
+  font-size: 0.625rem;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  opacity: 0.6;
+  margin-top: 0.6rem;
+  display: block;
+}
+.countdown--day {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: clamp(1.05rem, 0.9rem + 1vw, 1.45rem);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: var(--gold-pale);
+  padding-inline: 1.5rem;
+}
+
+/* --- 7. 引子 ------------------------------------------------------------
+   这一段不放照片，改当 Hero（近黑）到第二段（深红）之间的过渡。
+   停点给得密，间距不等分，才不会看出一圈一圈的色阶带；
+   最后一停点必须正好等于 --accent-ink，接下去那段才看不出接缝。 */
+.intro {
+  text-align: center;
+  /* 这一段整段是深底，文字色在这里换过来 */
+  --ink:       #F5EDE3;
+  --ink-soft:  rgba(245, 237, 227, 0.82);
+  --gold:      var(--gold-pale);
+  --gold-text: var(--gold-pale);
+  color: var(--ink);
+  background: linear-gradient(
+    to bottom,
+    #1A0406  0%,
+    #1A0406  6%,    /* 两头各留一小段平的：变化率在交界处收到零， */
+    #270508  25%,   /* 眼睛才不会在接缝上看出一条线（马赫带）     */
+    #340609  45%,
+    #40080B  64%,
+    #4D090C  82%,
+    #5A0A0E  92%,
+    #5A0A0E  100%
+  );
+}
+.intro .intro__line em { color: var(--gold-pale); }
+.intro__en {
+  font-family: var(--font-latin);
+  font-style: italic;
+  font-size: clamp(1.05rem, 0.92rem + 0.6vw, 1.3rem);
+  letter-spacing: 0.1em;
+  color: var(--gold-text);
+  margin-bottom: 1.5rem;
+}
+.intro__line {
+  text-wrap: balance;
+  font-family: var(--font-serif);
+  font-size: clamp(1.3rem, 0.95rem + 1.7vw, 2.05rem);
+  line-height: 2;
+  letter-spacing: 0.12em;
+  text-indent: 0.12em;
+  color: var(--ink);
+}
+.intro__line em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* --- 8. 照片 ------------------------------------------------------------ */
+.figure { margin: 0; position: relative; }
+.figure img { width: 100%; height: 100%; object-fit: cover; }
+.figure--tall     { aspect-ratio: 2 / 3; }
+.figure--portrait { aspect-ratio: 4 / 5; }
+.figure--wide     { aspect-ratio: 3 / 2; }
+.figure--solo     { max-width: 34rem; margin-inline: auto; }
+.figure--wide.figure--solo { max-width: 52rem; }
+
+/* 照片本身就是放大钮：点了开灯箱。整张可点，键盘也走得到。 */
+.figure__btn {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-flat);
+  background: var(--paper-3);
+  overflow: hidden;
+  position: relative;
+}
+.figure__btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(251, 247, 241, 0.55);
+  opacity: 0;
+  transform: scale(1.015);
+  transition: opacity 0.45s var(--ease-soft), transform 0.6s var(--ease-out);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  /* 内层 img 的 transform 归 GSAP 视差管，别在这里也去动它，
+     两边会抢同一个属性。hover 只做那圈内框。 */
+  .figure__btn:hover::after { opacity: 1; transform: scale(1); }
+}
+.figure__btn:focus-visible::after { opacity: 1; transform: scale(1); }
+
+/* 幕布式揭开要裁在外层，内层才好做视差 */
+.reveal-img { overflow: hidden; }
+
+.figcaption {
+  font-size: 0.8125rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-mute);
+  margin-top: 1rem;
+}
+
+.duo {
+  display: grid;
+  gap: clamp(1.25rem, 3.5vw, 2.5rem);
+  grid-template-columns: 1fr;
+  margin-block: clamp(2.5rem, 7vw, 5rem);
+}
+.offset-pair {
+  display: grid;
+  gap: clamp(1.25rem, 3.5vw, 2.5rem);
+  grid-template-columns: 1fr;
+  margin-block: clamp(2.5rem, 7vw, 5rem);
+}
+.stack { margin: 0; }
+
+/* 章节一下半的那句独白，比 prose 重一点 */
+.pull {
+  text-wrap: balance;
+  font-family: var(--font-serif);
+  font-size: clamp(1.2rem, 0.98rem + 1.05vw, 1.7rem);
+  line-height: 2.15;
+  letter-spacing: 0.1em;
+  text-indent: 0.1em;
+  text-align: center;
+  color: var(--ink);
+  margin-block: clamp(2.5rem, 7vw, 4.5rem);
+}
+
+/* --- 9. 章节二：囍（全红） ---------------------------------------------- */
+.ch-xi {
+  background: var(--accent-ink);
+  color: #F3EBE0;
+  overflow: hidden;
+}
+.ch-xi .sec-en     { color: var(--gold-pale); }
+.ch-xi .prose        { color: rgba(251, 247, 241, 0.84); }
+.ch-xi .figure__btn  { background: rgba(0, 0, 0, 0.2); }
+
+.xi-mark {
+  font-family: var(--font-serif);
+  font-size: clamp(4.5rem, 3rem + 12vw, 11rem);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--gold-pale);
+  margin-bottom: 1.75rem;
+  user-select: none;
+}
+
+/* 传统请柬正文 */
+.invitation {
+  font-family: var(--font-serif);
+  font-size: clamp(1.1rem, 0.92rem + 0.85vw, 1.6rem);
+  line-height: 2.3;
+  letter-spacing: 0.12em;
+  text-indent: 0.12em;
+  text-align: center;
+  color: #F3EBE0;
+  border-block: 1px solid rgba(224, 205, 169, 0.3);
+  padding-block: clamp(2.25rem, 5.5vw, 3.5rem);
+  margin: clamp(2.5rem, 6vw, 4.5rem) auto;
+}
+.invitation strong {
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.16em;
+}
+.invitation__date {
+  display: block;
+  margin-top: 1.5rem;
+  font-family: var(--font-latin);
+  font-size: 1.15em;
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  color: #fff;
+}
+.invitation__by {
+  display: block;
+  margin-top: 1.25rem;
+  font-family: var(--font-latin);
+  font-style: italic;
+  font-size: 0.72em;
+  letter-spacing: 0.14em;
+  opacity: 0.72;
+}
+
+/* 资讯：不做卡片，只留一条细线跟大量留白 */
+.facts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(2rem, 5vw, 3rem) clamp(2rem, 6vw, 5rem);
+  margin: 0;
+  padding-top: clamp(2rem, 5vw, 3rem);
+  border-top: 1px solid rgba(224, 205, 169, 0.3);
+}
+.fact { margin: 0; }
+.nb { white-space: nowrap; }
+.ch-xi .sec-title { margin-top: clamp(3rem, 8vw, 5rem); }
+.fact__k {
+  font-size: 0.6875rem;
+  letter-spacing: 0.36em;
+  text-indent: 0.36em;
+  color: var(--gold-pale);
+  margin-bottom: 0.9rem;
+}
+.fact__v {
+  font-family: var(--font-serif);
+  font-size: clamp(1.05rem, 0.92rem + 0.55vw, 1.3rem);
+  letter-spacing: 0.08em;
+  line-height: 1.75;
+  margin: 0;
+}
+.fact__sub {
+  font-size: 0.8125rem;
+  line-height: 1.85;
+  color: rgba(251, 247, 241, 0.6);
+  margin: 0.55rem 0 0;
+  letter-spacing: 0.06em;
+}
+
+/* --- 9b. 当天流程 -------------------------------------------------------
+   四条，时间一栏、内容一栏。分隔线只画在项与项之间，
+   不给每一行都加上下框。                                          */
+.timeline-sec { background: var(--paper); }
+
+.timeline {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 44rem;
+}
+.timeline__item {
+  display: grid;
+  gap: 0.5rem 2.5rem;
+  grid-template-columns: 1fr;
+  padding-block: clamp(1.75rem, 4vw, 2.5rem);
+}
+.timeline__item + .timeline__item { border-top: 1px solid var(--line); }
+
+.timeline__time {
+  font-family: var(--font-latin);
+  font-size: clamp(1.15rem, 1rem + 0.7vw, 1.5rem);
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin: 0;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.timeline__body { margin: 0; }
+.timeline__title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.02rem, 0.95rem + 0.4vw, 1.2rem);
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  margin: 0;
+}
+.timeline__title--sub { margin-top: 0.85rem; }
+.timeline__note {
+  font-size: 0.9375rem;
+  line-height: 1.95;
+  color: var(--ink-soft);
+  margin: 0.4rem 0 0;
+}
+
+/* --- 9c. 单张照片 -------------------------------------------------------- */
+.gallery-sec { background: var(--paper); }
+.gallery-sec__caption {
+  text-wrap: balance;
+  margin-top: clamp(1.75rem, 4vw, 2.5rem);
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: clamp(1.1rem, 0.95rem + 0.8vw, 1.5rem);
+  letter-spacing: 0.12em;
+  text-indent: 0.12em;
+  color: var(--ink);
+}
+
+/* --- 10. 按钮 -----------------------------------------------------------
+   规则：可点的元件一律全圆角；填色钮用 --accent，
+   幽灵钮吃所在区块的文字色，红底浅底都读得到。            */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1rem 2.4rem;
+  border: 1px solid var(--accent-fill);
+  background: var(--accent-fill);
+  color: #FBF7F1;
+  font-size: 0.9375rem;
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: var(--r-pill);
+  position: relative;
+  overflow: hidden;
+  transition: color 0.45s var(--ease-soft), border-color 0.45s var(--ease-soft);
+}
+.btn::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: var(--ink);
+  transform: translateY(101%);
+  transition: transform 0.55s var(--ease-out);
+}
+.btn > * { position: relative; z-index: 1; }
+.btn:hover::before, .btn:focus-visible::before { transform: translateY(0); }
+.btn:hover, .btn:focus-visible { border-color: var(--ink); color: var(--paper); }
+.btn:active { transform: translateY(1px); }
+
+/* 幽灵钮：底透明，边跟字用当区块的文字色，hover 才填实。
+   填什么色、字翻成什么色，两个都写死在变数里 —— 不要靠 currentColor
+   自己推，深色模式下会推出「深底配深字」。 */
+.btn--ghost {
+  --btn-fill: var(--ink);
+  --btn-flip: var(--paper);
+  background: transparent;
+  border-color: currentColor;
+  color: inherit;
+}
+.btn--ghost::before { background: var(--btn-fill); }
+.btn--ghost:hover, .btn--ghost:focus-visible {
+  color: var(--btn-flip);
+  border-color: var(--btn-fill);
+}
+/* 红底区块：填奶白、字翻成深红 */
+.ch-xi .btn--ghost {
+  --btn-fill: #F3EBE0;
+  --btn-flip: var(--accent-ink);
+}
+
+.btn--lg { padding: 1.15rem 3rem; font-size: 1rem; letter-spacing: 0.2em; text-indent: 0.2em; }
+.btn[disabled] { opacity: 0.5; pointer-events: none; }
+
+/* --- 11. 我们想说 -------------------------------------------------------- */
+.note-sec { background: var(--paper); }
+.note-sec .prose + .prose { margin-top: 1.6rem; }
+.note-sec__en {
+  margin-top: clamp(2.25rem, 5vw, 3rem);
+  font-family: var(--font-latin);
+  font-style: italic;
+  font-size: clamp(1.15rem, 0.98rem + 0.8vw, 1.55rem);
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.signoff {
+  margin-top: clamp(2.5rem, 6vw, 3.5rem);
+  text-align: center;
+  font-family: var(--font-serif);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+}
+
+/* --- 11b. Closing -------------------------------------------------------- */
+.closing {
+  background: var(--accent-ink);
+  color: #F3EBE0;
+  text-align: center;
+  padding-bottom: clamp(6rem, 14vw, 9rem);
+}
+.closing .prose { color: rgba(251, 247, 241, 0.84); }
+.closing .prose + .prose { margin-top: 1.5rem; }
+.closing__title {
+  text-wrap: balance;
+  font-family: var(--font-latin);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 1.2rem + 3.4vw, 3.4rem);
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  margin-bottom: clamp(2rem, 5vw, 3rem);
+  color: #fff;
+}
+.closing__date {
+  margin-top: clamp(2.5rem, 6vw, 3.5rem);
+  font-family: var(--font-latin);
+  font-size: clamp(1.05rem, 0.92rem + 0.6vw, 1.35rem);
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  color: var(--gold-pale);
+  margin-bottom: 0.75rem;
+}
+.closing__names {
+  font-family: var(--font-serif);
+  font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: #F3EBE0;
+  margin-bottom: 1.5rem;
+}
+.closing__en {
+  font-family: var(--font-latin);
+  font-style: italic;
+  font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.3rem);
+  letter-spacing: 0.08em;
+  color: var(--gold-pale);
+}
+
+/* --- 12. RSVP ----------------------------------------------------------- */
+.rsvp { background: var(--paper-2); }
+
+.form {
+  margin-top: clamp(2.5rem, 6vw, 3.5rem);
+  display: grid;
+  gap: 1.9rem;
+  text-align: left;
+}
+.field { display: grid; gap: 0.7rem; }
+.field > label, .fieldset__legend {
+  font-size: 0.8125rem;
+  letter-spacing: 0.2em;
+  color: var(--ink-soft);
+}
+.field .req { color: var(--accent); margin-left: 0.25em; }
+.hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+}
+
+.input, .textarea, .select {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--r-flat);
+  padding: 0.75rem 0.1rem;
+  transition: border-color 0.35s var(--ease-soft);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.select {
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+                    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+  background-position: right 0.75rem center, right 0.4rem center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.select option { color: #1B1917; background: #FBF7F1; }
+.textarea { resize: vertical; min-height: 5.5rem; line-height: 1.8; }
+.input:focus, .textarea:focus, .select:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+  box-shadow: 0 1px 0 0 var(--accent);
+}
+.input::placeholder, .textarea::placeholder { color: var(--ink-mute); opacity: 1; }
+
+.choices { display: flex; gap: 0.85rem; flex-wrap: wrap; }
+.choice { flex: 1 1 9rem; position: relative; }
+.choice input {
+  position: absolute; opacity: 0; width: 0; height: 0;
+}
+.choice span {
+  display: block;
+  text-align: center;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  letter-spacing: 0.12em;
+  font-size: 0.9375rem;
+  transition: background 0.35s var(--ease-soft), border-color 0.35s var(--ease-soft), color 0.35s var(--ease-soft);
+}
+@media (hover: hover) {
+  .choice:hover span { border-color: var(--ink-mute); }
+}
+.choice input:checked + span {
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: #FBF7F1;
+}
+.choice input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* 只在选「出席」时展开的区块 */
+.conditional {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.6s var(--ease-out),
+    opacity 0.4s var(--ease-soft);
+}
+.conditional__inner {
+  display: grid;
+  gap: 1.9rem;
+  overflow: hidden;
+  min-height: 0;
+}
+.conditional.is-open { grid-template-rows: 1fr; opacity: 1; }
+
+.honeypot { position: absolute; left: -9999px; opacity: 0; }
+
+.form__actions { margin-top: 0.75rem; text-align: center; }
+
+.form__status {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9375rem;
+  line-height: 1.8;
+  min-height: 1.5rem;
+  color: var(--ink-soft);
+}
+.form__status[data-tone="err"] { color: var(--accent); }
+
+.fallback {
+  margin-top: 1.25rem;
+  display: none;
+  text-align: center;
+}
+.fallback.is-shown { display: block; }
+
+/* 提交成功后的替换视图 */
+.thanks {
+  display: none;
+  text-align: center;
+  padding-block: clamp(2rem, 6vw, 3.5rem);
+}
+.thanks.is-shown { display: block; animation: fadeUp 0.9s var(--ease-out) both; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(1.5rem); }
+  to   { opacity: 1; transform: none; }
+}
+.thanks__mark {
+  font-family: var(--font-serif);
+  font-size: clamp(2.75rem, 2rem + 5vw, 4.5rem);
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 1.5rem;
+}
+.thanks__title {
+  font-family: var(--font-latin);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 1.2rem + 2.4vw, 2.6rem);
+  letter-spacing: 0.04em;
+  margin-bottom: 1.5rem;
+}
+.thanks__line {
+  margin-top: 1.5rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.1rem, 0.98rem + 0.6vw, 1.35rem);
+  letter-spacing: 0.14em;
+  text-indent: 0.14em;
+  color: var(--ink);
+}
+
+/* --- 13. Lightbox ------------------------------------------------------- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 9, 8, 0.97);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s var(--ease-soft), visibility 0.45s;
+}
+.lightbox.is-open { opacity: 1; visibility: visible; }
+
+.lightbox__bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem var(--gutter);
+  color: rgba(251, 247, 241, 0.65);
+  font-family: var(--font-latin);
+  letter-spacing: 0.2em;
+  font-size: 0.9375rem;
+}
+.lightbox__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0 clamp(0.5rem, 3vw, 2rem);
+  min-height: 0;
+}
+.lightbox__stage img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transform: scale(0.985);
+  transition: opacity 0.5s var(--ease-soft), transform 0.7s var(--ease-out);
+}
+.lightbox__stage img.is-shown { opacity: 1; transform: none; }
+
+.lightbox__nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.25rem var(--gutter) 2rem;
+}
+.icon-btn {
+  width: 3rem; height: 3rem;
+  display: grid; place-items: center;
+  border: 1px solid rgba(251, 247, 241, 0.28);
+  background: transparent;
+  color: #FBF7F1;
+  border-radius: var(--r-pill);
+  transition: background 0.35s var(--ease-soft), border-color 0.35s var(--ease-soft);
+}
+.icon-btn--bare { width: 2.5rem; height: 2.5rem; border: 0; }
+.icon-btn:hover, .icon-btn:focus-visible {
+  background: rgba(251, 247, 241, 0.12);
+  border-color: rgba(251, 247, 241, 0.6);
+}
+body.is-locked { overflow: hidden; }
+
+/* --- 14. 响应式 --------------------------------------------------------- */
+@media (min-width: 40em) {
+  .hero__media img { object-position: 50% 55%; }
+
+  /* 一图一文：图窄一点、文字留白多一点，不做 50/50 */
+  .duo { grid-template-columns: 1.05fr 0.95fr; align-items: center; }
+  .duo--even { grid-template-columns: 1fr 1fr; align-items: start; }
+  .duo--even > :last-child { margin-top: clamp(2rem, 6vw, 4.5rem); }
+
+  .offset-pair { grid-template-columns: 0.92fr 1.08fr; align-items: start; }
+  .offset-pair > :first-child { margin-top: clamp(2.5rem, 7vw, 6rem); }
+
+  .facts { grid-template-columns: repeat(2, 1fr); }
+  .timeline__item { grid-template-columns: 8.5rem 1fr; align-items: baseline; }
+  .form--2col { grid-template-columns: 1fr 1fr; }
+  .form--2col > .field--full { grid-column: 1 / -1; }
+}
+@media (min-width: 60em) {
+  .duo { gap: clamp(2rem, 5vw, 4rem); }
+}
+
+/* 矮萤幕（SE 那种、或横放）：封面元素比原本多，要收一点才塞得下 */
+@media (max-height: 730px) {
+  .hero__inner  { padding-bottom: clamp(2rem, 5vh, 3rem); }
+  .hero__latin  { margin-bottom: 1rem; }
+  .hero__names  { font-size: clamp(1.9rem, 1rem + 4.6vw, 3rem); margin-bottom: 0.9rem; }
+  .hero__date   { font-size: 1.05rem; margin-bottom: 0.55rem; }
+  .hero__meta   { margin-bottom: 0.3rem; }
+  .countdown__lead { margin-top: 1.1rem; margin-bottom: 0.6rem; }
+  .countdown    { padding-block: 0.75rem; }
+  .countdown__num { font-size: 1.5rem; }
+  .countdown__lbl { margin-top: 0.4rem; }
+  .hero__cta    { margin-top: 1.25rem; }
+  .hero__cta .btn { padding: 0.85rem 2rem; }
+}
+
+/* --- 15. 减少动态偏好 --------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .gsap .reveal, .gsap .reveal-img,
+  .gsap .hero__inner, .gsap .xi-mark {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+  .hero__media img { transform: none; animation: none; }
+  .conditional { grid-template-rows: 1fr; opacity: 1; }
+  .conditional:not(.is-open) { display: none; }
+}
+
+/* --- 16. 打印 ----------------------------------------------------------- */
+@media print {
+  .hero { min-height: auto; }
+  .lightbox, .form, .thread, .grain { display: none !important; }
+  body { background: #fff; color: #000; }
+}

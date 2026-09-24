@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>杨伟彬 &amp; 蔡美雯 · 婚礼邀请</title>
+<meta name="description" content="我们要结婚啦 💍 2026年12月20日 · 星期日 · 太平 The Flemington Hotel 湖景阁。很希望这一天，有你在场。">
+<!-- 页面公开在网上，但不希望被搜索引擎收录 -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#5A0A0E">
+
+<!-- 分享到 WhatsApp / Facebook 时的预览卡 -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="杨伟彬 & 蔡美雯 · 婚礼邀请">
+<meta property="og:description" content="2026年12月20日 · 星期日 · The Flemington Hotel 湖景阁 · Taiping">
+<meta property="og:image" content="assets/img/eosr5317.jpg">
+<meta property="og:locale" content="zh_CN">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Noto+Sans+SC:wght@300;400&family=Noto+Serif+SC:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="preload" as="image" href="assets/img/eosr5317.jpg" fetchpriority="high">
+
+<!-- GSAP 与它的外挂。放在 head 且不加 defer：等它载入完页面才开始画，
+     动画元素就不会先闪一下再被藏起来。CDN 万一挂掉，下面那段 script
+     不会加上 .gsap，CSS 就整份维持「全部可见」的静态版。 -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollSmoother.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/DrawSVGPlugin.min.js"></script>
+<script>
+  document.documentElement.className += " js";
+  if (window.gsap && window.ScrollTrigger) document.documentElement.className += " gsap";
+</script>
+</head>
+<body>
+
+<!-- 纸纹。固定层、不吃点击，放在卷动容器外面 -->
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ScrollSmoother 需要这两层包裹；position:fixed 的东西（灯箱）留在外面 -->
+<div id="smooth-wrapper">
+<div id="smooth-content">
+
+<!-- 贯穿全页的红线（纯装饰，关掉 JS 也不影响阅读） -->
+<svg class="thread" id="thread" viewBox="0 0 100 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="threadGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#C21F26"/>
+      <stop offset="1" stop-color="#C21F26"/>
+    </linearGradient>
+  </defs>
+  <!-- d 由 main.js 依实际页高重新产生 -->
+  <path id="threadPath" stroke="url(#threadGrad)" d="M12,0 L12,1000"/>
+</svg>
+
+
+<!-- ═══════════════════ 1 · HERO ═══════════════════ -->
+<header class="hero">
+  <div class="hero__media">
+    <img src="assets/img/eosr5317.jpg" alt="大红背景前，两人穿中式礼服并肩而立，手拿囍字扇，笑得很开" fetchpriority="high" width="1067" height="1600">
+  </div>
+
+  <div class="hero__inner">
+    <!-- 文案 · Hero -->
+    <p class="hero__latin" data-hero="1">The Wedding Of</p>
+    <h1 class="hero__names" data-split="chars">
+      杨伟彬
+      <span class="hero__amp">and</span>
+      蔡美雯
+    </h1>
+    <p class="hero__date" data-hero="2">20 · 12 · 2026</p>
+    <p class="hero__meta" data-hero="3">Sunday · Taiping</p>
+    <p class="hero__venue" data-hero="4">The Flemington Hotel · 湖景阁</p>
+
+    <p class="countdown__lead" id="countdownLead">距离我们结婚还有</p>
+    <div class="countdown" id="countdown" aria-live="polite">
+      <!-- 由 main.js 填入 -->
+    </div>
+
+    <p class="hero__cta">
+      <a class="btn" href="#rsvp" data-scroll-to><span>确认出席 RSVP</span></a>
+    </p>
+  </div>
+</header>
+
+
+<!-- ═══════════════════ 引子 ═══════════════════ -->
+<section class="section intro">
+  <div class="wrap narrow">
+    <!-- 文案 · 引子 -->
+    <div class="rule reveal" aria-hidden="true"></div>
+    <p class="intro__en reveal">We’re making it official 💍</p>
+    <p class="intro__line reveal" data-split="lines">
+      我们要结婚啦。<br>
+      <em>很希望这一天，有你在场。</em>
+    </p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════ 2 · Invitation ＋ 3 · 婚宴资料 ═══════════════════ -->
+<section class="section ch-xi" id="invitation">
+  <div class="wrap">
+
+    <div class="narrow center">
+      <p class="xi-mark" aria-hidden="true">囍</p>
+      <p class="sec-en reveal">Save The Date</p>
+      <!-- 文案 · Invitation -->
+      <p class="prose reveal">
+        终于来到这一天。
+      </p>
+      <p class="prose reveal">
+        我们想邀请重要的家人和朋友，<br>
+        一起吃顿饭，也一起见证我们人生的重要时刻。
+      </p>
+    </div>
+
+    <div class="invitation narrow reveal" data-split="lines">
+      这一天，很希望你也在。
+      <span class="invitation__date">December 20, 2026</span>
+      <span class="invitation__by">We hope to celebrate with you.</span>
+    </div>
+
+    <!-- 文案 · 婚宴资料 -->
+    <div class="narrow center" id="details">
+      <h2 class="sec-title reveal" data-split="chars">婚宴资料</h2>
+      <p class="sec-en reveal">Wedding Details</p>
+    </div>
+
+    <div class="facts">
+      <div class="fact">
+        <p class="fact__k">DATE</p>
+        <p class="fact__v">2026年12月20日</p>
+        <p class="fact__sub">星期日</p>
+      </div>
+      <div class="fact">
+        <p class="fact__k">TIME</p>
+        <p class="fact__v"><span class="nb">11:00 AM</span> – <span class="nb">3:00 PM</span></p>
+      </div>
+      <div class="fact">
+        <p class="fact__k">VENUE</p>
+        <p class="fact__v">The Flemington Hotel · 湖景阁</p>
+        <p class="fact__sub">1, Jalan Samanea Saman,<br>34000 Taiping, Perak</p>
+      </div>
+      <div class="fact">
+        <p class="fact__k">DRESS CODE</p>
+        <p class="fact__v">正装 · Semi Formal</p>
+        <p class="fact__sub">穿得舒服、好看就可以 🤍<br>现场冷气偏凉，建议带一件外套。</p>
+      </div>
+    </div>
+
+    <p class="center reveal" style="margin-top:clamp(2.5rem,6vw,3.5rem)">
+      <a class="btn btn--ghost" id="mapLink" href="#" target="_blank" rel="noopener">
+        <span>开启地图导航</span>
+      </a>
+    </p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════ 4 · 当天流程 ═══════════════════ -->
+<section class="section timeline-sec has-bg" id="timeline">
+  <div class="sec-bg" aria-hidden="true">
+    <img src="assets/img/eosr5071.jpg" alt="" loading="lazy" width="1067" height="1600">
+  </div>
+  <div class="wrap">
+    <div class="narrow center">
+      <h2 class="sec-title reveal" data-split="chars">当天流程</h2>
+      <p class="sec-en reveal">Wedding Timeline</p>
+    </div>
+
+    <!-- 文案 · 当天流程 -->
+    <ol class="timeline">
+      <li class="timeline__item reveal">
+        <p class="timeline__time">11:00 AM</p>
+        <div class="timeline__body">
+          <p class="timeline__title">迎宾 · Guest Arrival</p>
+          <p class="timeline__note">开始报到，现场备有简单茶点。</p>
+          <p class="timeline__title timeline__title--sub">新人敬茶仪式 · Tea Ceremony</p>
+        </div>
+      </li>
+      <li class="timeline__item reveal">
+        <p class="timeline__time">12:30 PM</p>
+        <div class="timeline__body">
+          <p class="timeline__title">正式开宴</p>
+          <p class="timeline__note">午宴正式开始。</p>
+        </div>
+      </li>
+      <li class="timeline__item reveal">
+        <p class="timeline__time">1:00 PM</p>
+        <div class="timeline__body">
+          <p class="timeline__title">注册仪式 · Registration Ceremony</p>
+          <p class="timeline__note">一起见证我们正式成为夫妻 💍</p>
+        </div>
+      </li>
+      <li class="timeline__item reveal">
+        <p class="timeline__time">3:00 PM</p>
+        <div class="timeline__body">
+          <p class="timeline__title">午宴结束</p>
+          <p class="timeline__note">谢谢你来，和我们一起度过这一天。</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+
+<!-- ═══════════════════ 5 · Gallery ═══════════════════ -->
+<section class="section gallery-sec" id="gallery">
+  <div class="wrap">
+    <div class="narrow center">
+      <p class="sec-en sec-en--lead reveal">A little moment before “I do”</p>
+    </div>
+
+    <figure class="figure figure--tall figure--solo reveal-img">
+      <button class="figure__btn" type="button" data-photo="eosr5419" aria-label="放大这张照片">
+        <img src="assets/img/eosr5419.jpg" alt="两人背对背拉开长串红色囍字剪纸，衣摆飞扬" loading="lazy" width="1067" height="1600">
+      </button>
+    </figure>
+
+    <!-- 文案 · 照片下 -->
+    <p class="gallery-sec__caption reveal">下一段旅程，我们一起走。</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════ 6 · 我们想说 ═══════════════════ -->
+<section class="section note-sec has-bg" id="note">
+  <div class="sec-bg" aria-hidden="true">
+    <img src="assets/img/eosr5139.jpg" alt="" loading="lazy" width="1067" height="1600">
+  </div>
+  <div class="wrap narrow center">
+    <h2 class="sec-title reveal" data-split="chars">我们想说</h2>
+    <p class="sec-en reveal">A Little Note</p>
+
+    <!-- 文案 · 我们想说 -->
+    <p class="prose reveal">
+      婚礼当天应该会很热闹。
+    </p>
+    <p class="prose reveal">
+      但比起布置和流程，<br>
+      我们更期待看到熟悉的人坐在台下。
+    </p>
+    <p class="prose reveal">
+      一路走到今天，<br>
+      很谢谢生命里有你们。
+    </p>
+    <p class="prose reveal">
+      如果时间允许，<br>
+      希望这一天，我们可以见到你。
+    </p>
+
+    <p class="note-sec__en reveal">See you at our wedding 🤍</p>
+    <p class="signoff reveal">伟彬 · 美雯</p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════ 7 · 敬请回覆 ═══════════════════ -->
+<section class="section rsvp has-bg" id="rsvp">
+  <div class="sec-bg sec-bg--low" aria-hidden="true">
+    <img src="assets/img/eosr5085.jpg" alt="" loading="lazy" width="1067" height="1600">
+  </div>
+  <div class="wrap narrow center">
+
+    <!-- 红线在这里收成一个结 -->
+    <svg class="knot" width="60" height="86" viewBox="0 0 60 86" fill="none" aria-hidden="true">
+      <path id="knotPath" d="M30 0 C30 22 14 26 14 38 C14 50 46 50 46 38 C46 26 30 22 30 0 M30 44 L30 86"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+
+    <h2 class="sec-title reveal" data-split="chars">敬请回覆</h2>
+    <p class="sec-en reveal">Will you be there?</p>
+    <p class="prose reveal">
+      <!-- 文案 · RSVP -->
+      请在 <strong id="rsvpDeadline">2026年11月5日</strong> 前告诉我们，<br>让我们提前为你准备好座位。
+    </p>
+
+    <form class="form form--2col reveal" id="rsvpForm" novalidate>
+      <!-- 挡机器人用，请勿删除 -->
+      <div class="honeypot" aria-hidden="true">
+        <label>请留空<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+      </div>
+
+      <div class="field field--full">
+        <label for="f-name">姓名<span class="req">*</span></label>
+        <input class="input" id="f-name" name="name" type="text" required autocomplete="name" placeholder="您的名字，或「陈氏一家」">
+      </div>
+
+      <div class="field field--full">
+        <span class="fieldset__legend" id="lbl-att">能否出席<span class="req">*</span></span>
+        <div class="choices" role="radiogroup" aria-labelledby="lbl-att">
+          <label class="choice">
+            <input type="radio" name="attending" value="会出席" required>
+            <span>💍 我会出席</span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="attending" value="无法出席" required>
+            <span>🤍 抱歉，这次无法出席</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="conditional field--full" id="attendingOnly">
+       <div class="conditional__inner">
+        <div class="field">
+          <label for="f-guests">出席人数（含您本人）</label>
+          <select class="select" id="f-guests" name="guests" aria-describedby="hint-guests">
+            <option value="1">1 位</option>
+            <option value="2">2 位</option>
+            <option value="3">3 位</option>
+            <option value="4">4 位</option>
+            <option value="5">5 位</option>
+            <option value="6">6 位</option>
+            <option value="7">7 位</option>
+            <option value="8">8 位</option>
+            <option value="9 位以上">9 位以上</option>
+          </select>
+          <p class="hint" id="hint-guests">9 位以上请在留言注明人数。</p>
+        </div>
+        <div class="field">
+          <label for="f-diet">饮食需求</label>
+          <select class="select" id="f-diet" name="diet" aria-describedby="hint-diet">
+            <option value="没有特别忌口">没有特别忌口</option>
+            <option value="素食">素食</option>
+            <option value="清真 Halal">清真 Halal</option>
+            <option value="其他">其他</option>
+          </select>
+          <p class="hint" id="hint-diet">如有过敏或其他特别饮食需求，请在留言告诉我们。</p>
+        </div>
+       </div>
+      </div>
+
+      <div class="field field--full">
+        <label for="f-phone">联络号码<span class="req">*</span></label>
+        <input class="input" id="f-phone" name="phone" type="tel" required autocomplete="tel" inputmode="tel" placeholder="012-345 6789" aria-describedby="hint-phone">
+        <p class="hint" id="hint-phone">方便我们婚礼前与你确认。</p>
+      </div>
+
+      <div class="field field--full">
+        <label for="f-message">给我们的话（选填）</label>
+        <textarea class="textarea" id="f-message" name="message" rows="3" placeholder="想说什么都可以 🤍"></textarea>
+      </div>
+
+      <div class="form__actions field--full">
+        <button class="btn btn--lg" type="submit" id="submitBtn"><span>确认我的 RSVP</span></button>
+        <p class="form__status" id="formStatus" role="status" aria-live="polite"></p>
+        <p class="fallback" id="formFallback">
+          <a class="btn btn--ghost" id="waFallback" href="#" target="_blank" rel="noopener">
+            <span>改用 WhatsApp 回覆</span>
+          </a>
+        </p>
+      </div>
+    </form>
+
+    <!-- 送出成功后取代表单，文字由 main.js 依「会 / 不会出席」填 -->
+    <div class="thanks" id="thanks">
+      <p class="thanks__mark" aria-hidden="true">囍</p>
+      <h2 class="thanks__title" id="thanksTitle">Yay，我们婚礼见！💍</h2>
+      <p class="prose" id="thanksBody">你的 RSVP 收到啦。<br>到时候记得来找我们拍张照！</p>
+      <p class="thanks__line" id="thanksLine">12月20日见 🤍</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════ 8 · Closing（页面最后一段） ═══════════════════ -->
+<section class="section closing" id="closing">
+  <div class="wrap narrow center">
+    <!-- 文案 · Closing -->
+    <h2 class="closing__title reveal" data-split="lines">We can’t wait to<br>celebrate with you.</h2>
+    <p class="prose reveal">
+      谢谢你一路以来，<br>
+      出现在我们的生命里。
+    </p>
+    <p class="prose reveal">
+      这一次，<br>
+      很希望你能来见证我们人生的重要一天。
+    </p>
+    <p class="closing__date reveal">20 · 12 · 2026</p>
+    <p class="closing__names reveal">杨伟彬 · 蔡美雯</p>
+    <p class="closing__en reveal">See you soon 🤍</p>
+  </div>
+</section>
+
+
+</div><!-- /#smooth-content -->
+</div><!-- /#smooth-wrapper -->
+
+
+<!-- ═══════════════════ Lightbox ═══════════════════ -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="照片检视" hidden>
+  <div class="lightbox__bar">
+    <span id="lbCount">1 / 8</span>
+    <button class="icon-btn icon-btn--bare" type="button" id="lbClose" aria-label="关闭">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1 1l16 16M17 1L1 17" stroke="currentColor" stroke-width="1.4"/></svg>
+    </button>
+  </div>
+  <div class="lightbox__stage">
+    <img id="lbImg" src="" alt="">
+  </div>
+  <div class="lightbox__nav">
+    <button class="icon-btn" type="button" id="lbPrev" aria-label="上一张">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 1L3 8l7 7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+    </button>
+    <button class="icon-btn" type="button" id="lbNext" aria-label="下一张">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 1l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+    </button>
+  </div>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
