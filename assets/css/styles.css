@@ -980,6 +980,23 @@ html:not(.gsap) .hero__media img { transform: none; }
 }
 body.is-locked { overflow: hidden; }
 
+/* 背景音乐开关：固定右上，盖在纸纹上、灯箱下 */
+.music-btn {
+  position: fixed;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  z-index: 95;
+  width: 2.75rem; height: 2.75rem;
+  color: var(--ink);
+  border-color: var(--line);
+  background: var(--veil);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.music-btn:hover, .music-btn:focus-visible { background: var(--paper); border-color: var(--ink-mute); }
+.music-btn .is-off, .music-btn.is-muted .is-on { display: none; }
+.music-btn.is-muted .is-off { display: inline; }
+
 /* --- 14. 响应式 --------------------------------------------------------- */
 @media (min-width: 40em) {
   .hero__media img { object-position: 50% 55%; }

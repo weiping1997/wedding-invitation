@@ -46,6 +46,42 @@
   if (lbCountEl) lbCountEl.textContent = '1 / ' + C.photos.length;
 
 
+  /* --- 背景音乐 ---------------------------------------------------------- */
+  (function music() {
+    var audio = $('#bgm'), btn = $('#musicBtn');
+    if (!audio || !btn) return;
+    audio.volume = 0.4;   // 中等音量（iPhone 不吃这个，只跟手机音量键）
+
+    // 圆钮的图示只跟着实际播放状态走
+    function render() {
+      var off = audio.paused;
+      btn.classList.toggle('is-muted', off);
+      btn.setAttribute('aria-pressed', String(off));
+      btn.setAttribute('aria-label', off ? '播放音乐' : '静音');
+    }
+    audio.addEventListener('play', render);
+    audio.addEventListener('pause', render);
+
+    // 有声自动播放会被浏览器挡，所以等访客第一次碰页面再开始。
+    // 点在圆钮上的那一下交给圆钮自己处理，不然会「刚开就被关」。
+    var unlockEvents = ['pointerdown', 'pointerup', 'touchend', 'keydown'];
+    function stopUnlocking() {
+      unlockEvents.forEach(function (t) { document.removeEventListener(t, unlock, true); });
+    }
+    function unlock(e) {
+      if (btn.contains(e.target)) return;
+      audio.play().then(stopUnlocking, function () {});
+    }
+    unlockEvents.forEach(function (t) { document.addEventListener(t, unlock, true); });
+
+    btn.addEventListener('click', function () {
+      stopUnlocking();
+      if (audio.paused) audio.play().catch(function () {});
+      else audio.pause();
+    });
+  })();
+
+
   /* --- 2. 倒数计时 ------------------------------------------------------ */
   (function countdown() {
     var box  = $('#countdown');
